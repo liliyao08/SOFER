@@ -57,11 +57,11 @@ def load_and_preprocess_data(filepath, sample_number=-1):
     # scaler = StandardScaler()
     # X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
-    X = pd.read_csv(f'./features/X_20_0.9606.csv')
-    y = pd.read_csv(f'./features/y_20_0.9606.csv')
+    X = pd.read_csv(f'./features/X_1_0.7086.csv.csv')
+    y = pd.read_csv(f'./features/y_1_0.7086.csv.csv')
     X = X[0:50000]
     y = y[0:50000]
-    feature_names = np.load(f'./features/selected_features_5_0.9121.npy', allow_pickle=True)
+    feature_names = np.load(f'./features/selected_features_1_0.7086.npy', allow_pickle=True)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y,random_state=RANDOM_SEED)
     model = XGBClassifier(eval_metric='logloss', random_state=RANDOM_SEED).fit(X_train, y_train)

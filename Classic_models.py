@@ -18,33 +18,27 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import permutation_importance
 import matplotlib.pyplot as plt
 import seaborn as sns
-import time  # 用于计时
+import time  # For timing
 
-# ===============================
-# 0. 参数设置
-# ===============================
-RANDOM_SEED = 100         # 随机数种子
-SAMPLE_NUMBER = -1        # 采用的数据数量 (-1表示使用全部数据)
+RANDOM_SEED = 100         # Random seed for reproducibility
+SAMPLE_NUMBER = -1        # Number of samples to use (-1 means use all data)
 
-# KNN参数
-N_NEIGHBORS = 5           # 最近邻居的数量
-WEIGHT = 'uniform'        # 权重函数，可选 'uniform' 或 'distanc
+# KNN Parameters
+N_NEIGHBORS = 5           # Number of nearest neighbors
+WEIGHT = 'uniform'        # Weight function, options are 'uniform' or 'distance'
 
-# 置换重要性参数
-N_REPEATS = 10           # 置换次数
-N_JOBS = -1               # 使用所有可用的CPU核心
-PERMUTATION_SAMPLE_SIZE = 2000  # 仅使用前10,000个样本进行置换重要性计算
+# Permutation Importance Parameters
+N_REPEATS = 10           # Number of repetitions for permutation importance
+N_JOBS = -1               # Use all available CPU cores
+PERMUTATION_SAMPLE_SIZE = 2000  # Use only the first 2,000 samples for permutation importance calculation
 
-# ===============================
-# 1. 数据预处理
-# ===============================
 def load_and_preprocess_data(filepath, sample_number=-1):
     """
-    加载数据并进行预处理，包括特征值替换、归一化和数据划分。
+    Load data and preprocess, including feature replacement, normalization, and data splitting.
     """
     print("Loading data...")
     data = pd.read_csv(filepath)
-    feature_names=data.columns.tolist()
+    feature_names = data.columns.tolist()
 
     if sample_number > 0:
         data = data.sample(n=sample_number, random_state=RANDOM_SEED)
@@ -55,37 +49,34 @@ def load_and_preprocess_data(filepath, sample_number=-1):
         mapping = {val: idx for idx, val in enumerate(unique_values)}
         return data_list.replace(mapping)
 
-    # 替换字符串为数值
+    # Replace strings with numeric values
     columns_to_replace = ['SW']
     for col in columns_to_replace:
         data[col] = replace_string_to_value(data[col])
 
-    # 去除无效值
+    # Remove rows with missing values
     data = data.dropna()
 
-    # 提取特征和标签
+    # Extract features and labels
     y = data.label
     X = data.drop('label', axis=1).drop('account', axis=1).drop('SW', axis=1)
 
-    # 归一化处理
+    # Normalize the data
     print("Normalizing data...")
     scaler = StandardScaler()
     X = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
     return X, y, feature_names
 
-# ===============================
-# 2. 模型训练与评估
-# ===============================
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
 def train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=5, weights='uniform'):
     """
-    使用KNN训练模型，并进行预测和评估，包括计算和绘制置换重要性。
+    Train the model using KNN and evaluate, including calculating and plotting permutation feature importances.
     """
-    # 初始化KNN分类器
+    # Initialize the KNN classifier
     print("Training model...")
     # model = DecisionTreeClassifier(random_state=RANDOM_SEED)
     # model = KNeighborsClassifier(n_neighbors=1, weights=weights)
@@ -95,12 +86,12 @@ def train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=5, 
     # model = LogisticRegression(random_state=RANDOM_SEED)
     model.fit(X_train, y_train)
 
-    # 在测试集上预测
+    # Predict on the test set
     print("Evaluating model...")
-    y_pred_prob = model.predict_proba(X_test)[:, 1]  # 预测概率
-    y_pred = model.predict(X_test)                   # 预测类别标签
+    y_pred_prob = model.predict_proba(X_test)[:, 1]  # Predict probabilities
+    y_pred = model.predict(X_test)                   # Predict class labels
 
-    # 计算评估指标
+    # Calculate evaluation metrics
     accuracy = accuracy_score(y_test, y_pred)
     precision = precision_score(y_test, y_pred, average='weighted', zero_division=0)
     recall = recall_score(y_test, y_pred, average='weighted', zero_division=0)
@@ -110,7 +101,7 @@ def train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=5, 
     r2 = r2_score(y_test, y_pred_prob)
     cm = confusion_matrix(y_test, y_pred)
 
-    # 打印评估指标
+    # Print evaluation metrics
     print(f"Accuracy: {accuracy:.3f}")
     print(f"Precision: {precision:.3f}")
     print(f"Recall: {recall:.3f}")
@@ -119,29 +110,29 @@ def train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=5, 
     print(f"RMSE: {rmse:.3f}")
     print(f"R-squared: {r2:.3f}")
 
-    # 混淆矩阵
+    # Confusion matrix
     print("Confusion Matrix:")
     print(cm)
 
-    # 绘制混淆矩阵热图
+    # Plot confusion matrix heatmap
     plt.figure(figsize=(12, 10))
 
-    # 绘制热图
+    # Plot the heatmap
     # plt.rcParams['font.family'] = 'Times New Roman'
-    sns.heatmap(cm, annot=True, square=True, fmt='d', cmap='Blues',annot_kws={"size": 15})
+    sns.heatmap(cm, annot=True, square=True, fmt='d', cmap='Blues', annot_kws={"size": 15})
                 # xticklabels=feature_names, yticklabels=feature_names)
 
-    plt.ylabel('Actual', fontsize=20)  # 设置 'Actual' 的字体大小为 14
-    plt.xlabel('Predicted', fontsize=20)  # 设置 'Predicted' 的字体大小为 14
+    plt.ylabel('Actual', fontsize=20)  # Set 'Actual' label font size to 14
+    plt.xlabel('Predicted', fontsize=20)  # Set 'Predicted' label font size to 14
     # plt.title('Confusion Matrix')
     plt.show()
 
 
-    # 置换重要性
-    print("Calculating permutation features importances...")
+    # Permutation importance
+    print("Calculating permutation feature importances...")
     start_time = time.time()
 
-    # 仅使用前10,000个样本进行置换重要性计算
+    # Use only the first 2,000 samples for permutation importance calculation if the test set is large
     if len(X_test) > PERMUTATION_SAMPLE_SIZE:
         print(f"Using the first {PERMUTATION_SAMPLE_SIZE} samples from the test set for permutation importance.")
         X_test_subset = X_test.iloc[:PERMUTATION_SAMPLE_SIZE]
@@ -153,25 +144,25 @@ def train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=5, 
 
     perm_importance = permutation_importance(
         model, X_test_subset, y_test_subset,
-        n_repeats=N_REPEATS, 
-        random_state=RANDOM_SEED, 
-        scoring='f1_weighted', 
+        n_repeats=N_REPEATS,
+        random_state=RANDOM_SEED,
+        scoring='f1_weighted',
         n_jobs=N_JOBS
     )
     end_time = time.time()
     print(f"Permutation importance calculated in {end_time - start_time:.2f} seconds.")
 
-    # 转换为DataFrame
+    # Convert to DataFrame
     importance_df = pd.DataFrame({
         'Feature': X_train.columns,
         'Importance': perm_importance.importances_mean
     }).sort_values(by='Importance', ascending=False)
 
-    # 打印特征重要性
+    # Print feature importance
     print("Feature Importances (Permutation Importance):")
     print(importance_df)
 
-    # 绘制特征重要性柱状图
+    # Plot feature importance bar chart
     plt.figure(figsize=(20, 12))
     sns.barplot(x='Importance', y='Feature', data=importance_df, palette='viridis')
     plt.xlabel('Importance', fontsize=30)
@@ -183,23 +174,20 @@ def train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=5, 
 
     return model
 
-# ===============================
-# 3. 主程序
-# ===============================
 if __name__ == "__main__":
 
     # filepath = r"./BABD-13.csv"
 
-    # 加载并预处理数据
+    # Load and preprocess data
     # X, y, feature_names = load_and_preprocess_data(filepath, SAMPLE_NUMBER)
     X = pd.read_csv(f'./features/X_148_0.9665.csv')
     y = pd.read_csv(f'./features/y_148_0.9665.csv')
     feature_names = np.load(f'./features/selected_features_148_0.9665.npy', allow_pickle=True)
 
-    # 划分训练集和测试集，使用分层采样以保持类别比例
+    # Split into training and testing sets, using stratified sampling to maintain class proportions
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=100
     )
 
-    # 训练KNN模型并评估
-    model = train_model(X_train, X_test, y_train, y_test,feature_names, n_neighbors=N_NEIGHBORS, weights=WEIGHT)
+    # Train KNN model and evaluate
+    model = train_model(X_train, X_test, y_train, y_test, feature_names, n_neighbors=N_NEIGHBORS, weights=WEIGHT)

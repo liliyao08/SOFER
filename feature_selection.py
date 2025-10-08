@@ -14,7 +14,6 @@ X = data.drop(['label', 'account', 'SW'], axis=1)
 
 xgb_model = XGBClassifier(eval_metric='logloss', random_state=100)
 
-# 初始化递归特征消除
 n_features = X.shape[1]
 accuracy_list = []
 
@@ -30,7 +29,6 @@ ref_X,ref_y=X,y
 
 print(f'Number of features: {n_features}')
 
-# 递归特征消除
 while n_features > 0:
 
     rfe = RFE(estimator=xgb_model, n_features_to_select=n_features, step=1)
