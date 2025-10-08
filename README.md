@@ -35,14 +35,6 @@ X = X[0:50000]
 y = y[0:50000]
 ```
 
-### Feature Selection
-
-To perform feature selection on the dataset, run the following script:
-
-```bash
-python feature_selection.py
-```
-
 ## Full Pipeline Execution
 
 ### Datasets
