@@ -1,0 +1,2 @@
+The OFAC dataset was constructed by extracting 626 sanctioned addresses from the OFAC sanctions list https://sanctionslist.ofac.treas.gov/Home/SdnList, 
+covering 9 types of blockchain cryptocurrencies, including 17 handcrafted features.
